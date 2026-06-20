@@ -272,18 +272,18 @@
       row.className   = 'participant-row' + (e.presente ? ' presente' : '');
       row.dataset.index = i;
 
-      row.innerHTML = \`
-        <div class="num-badge">\${i + 1}</div>
+      row.innerHTML = `
+        <div class="num-badge">${i + 1}</div>
         <div class="participant-info">
-          <div class="nombre">\${p.nombre}</div>
-          <div class="username">\${p.username || ''}</div>
+          <div class="nombre">${p.nombre}</div>
+          <div class="username">${p.username || ''}</div>
         </div>
-        <div class="hora-tag" id="hora-\${i}">\${e.hora || ''}</div>
+        <div class="hora-tag" id="hora-${i}">${e.hora || ''}</div>
         <label class="checkbox-wrap">
-          <input type="checkbox" \${e.presente ? 'checked' : ''} onchange="toggleAsistencia(\${i}, this)">
+          <input type="checkbox" ${e.presente ? 'checked' : ''} onchange="toggleAsistencia(${i}, this)">
           <span class="checkmark"></span>
         </label>
-      \`;
+      `;
       contenedor.appendChild(row);
     });
 
@@ -305,10 +305,10 @@
     const hora     = presente ? getNow() : '';
     estado[salonActual][index] = { presente, hora };
 
-    const row = document.querySelector(\`.participant-row[data-index="\${index}"]\`);
+    const row = document.querySelector(`.participant-row[data-index="${index}"]`);
     if (row) {
       row.className = 'participant-row' + (presente ? ' presente' : '');
-      const tag = document.getElementById(\`hora-\${index}\`);
+      const tag = document.getElementById(`hora-${index}`);
       if (tag) tag.textContent = hora;
     }
     actualizarStats();
@@ -324,14 +324,14 @@
       headers: { 'Content-Type': 'text/plain' },
       body: JSON.stringify(payload)
     })
-    .then(() => mostrarToast(presente ? \`✅ \${username||nombre} — \${hora}\` : \`⬜ \${username||nombre} desmarcado\`, 'success'))
+    .then(() => mostrarToast(presente ? `✅ ${username||nombre} — ${hora}` : `⬜ ${username||nombre} desmarcado`, 'success'))
     .catch(() => mostrarToast('❌ Error al guardar', 'error'));
   }
 
   // ── CARGAR DESDE SHEETS ────────────────────────────────
   function cargarDesdeSheets() {
     mostrarToast('🔄 Cargando...', '');
-    fetch(\`\${APPS_SCRIPT_URL}?token=\${SESSION_TOKEN}&salon=\${salonActual}\`, { redirect: 'follow' })
+    fetch(`${APPS_SCRIPT_URL}?token=${SESSION_TOKEN}&salon=${salonActual}`, { redirect: 'follow' })
       .then(r => r.json())
       .then(res => {
         if (res.error === 'Sesión inválida') {
