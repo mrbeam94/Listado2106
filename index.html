@@ -290,7 +290,7 @@
         '<div class="num-badge">' + (i + 1) + '</div>' +
         '<div class="participant-info">' +
           '<div class="nombre">' + p.nombre + '</div>' +
-          '<div class="username">' + (p.username || '') + '</div>' +
+          '<div class="username">' + (p.username || '') + ' <span style="color:#bbb;margin:0 3px">|</span> ' + (p.codigo || '') + '</div>' +
         '</div>' +
         '<div class="hora-tag" id="hora-' + i + '">' + (e.hora || '') + '</div>' +
         '<label class="checkbox-wrap">' +
@@ -423,8 +423,4 @@
 
   window.pinPress = pinPress;
   window.pinDel = pinDel;
-  window.toggleAsistencia = toggleAsistencia;
-  window.filtrar = filtrar;
-</script>
-</body>
-</html>
+  window.toggleAsistencia =
