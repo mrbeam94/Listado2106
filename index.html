@@ -1,0 +1,1144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Registro de Incidencias</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: "Segoe UI", Arial, sans-serif; background: #eef0f4; min-height: 100vh; }
+    #operadorScreen { position: fixed; inset: 0; background: linear-gradient(135deg,#0f172a,#1e3a5f); display: flex; align-items: center; justify-content: center; z-index: 9998; }
+    .op-card { background: white; border-radius: 20px; padding: 40px 36px 32px; text-align: center; width: 340px; box-shadow: 0 20px 60px rgba(0,0,0,.4); }
+    .op-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .op-card h2 { font-size: 1.2rem; color: #1a1a2e; margin-bottom: 4px; font-weight: 700; }
+    .op-card p  { font-size: .82rem; color: #999; margin-bottom: 24px; }
+    .op-input { width: 100%; padding: 11px 16px; border: 1.5px solid #e8e8e8; border-radius: 10px; font-size: .92rem; margin-bottom: 10px; outline: none; color: #333; transition: border-color .2s; }
+    .op-input:focus { border-color: #1a73e8; }
+    .op-btn { width: 100%; padding: 12px; background: #1a73e8; color: white; border: none; border-radius: 10px; font-size: .95rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .op-btn:hover { background: #1557b0; }
+    .op-error { color: #e53935; font-size: .8rem; margin-top: 10px; min-height: 18px; }
+    .sidebar { position: fixed; left: 0; top: 0; bottom: 0; width: 220px; background: #0f172a; color: white; display: flex; flex-direction: column; z-index: 500; transition: transform .3s; }
+    .sidebar-logo { padding: 24px 20px 18px; border-bottom: 1px solid rgba(255,255,255,.07); }
+    .sidebar-logo h3 { font-size: .95rem; font-weight: 700; color: white; }
+    .sidebar-logo p  { font-size: .7rem; color: rgba(255,255,255,.35); margin-top: 3px; }
+    .sidebar-nav { flex: 1; padding: 14px 10px; display: flex; flex-direction: column; gap: 3px; }
+    .nav-btn { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border: none; border-radius: 10px; background: transparent; color: rgba(255,255,255,.55); cursor: pointer; font-size: .87rem; font-weight: 500; text-align: left; width: 100%; transition: all .15s; }
+    .nav-btn:hover { background: rgba(255,255,255,.07); color: rgba(255,255,255,.9); }
+    .nav-btn.active { background: rgba(26,115,232,.3); color: #93bbfc; }
+    .nav-icon { font-size: 1rem; }
+    .sidebar-footer { padding: 16px; border-top: 1px solid rgba(255,255,255,.07); }
+    .operador-badge { background: rgba(255,255,255,.05); border-radius: 10px; padding: 10px 12px; margin-bottom: 10px; }
+    .op-badge-label { font-size: .62rem; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: 1px; }
+    .op-badge-name  { font-size: .88rem; color: white; font-weight: 600; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .logout-btn { width: 100%; padding: 8px 12px; background: transparent; color: rgba(255,255,255,.35); border: 1px solid rgba(255,255,255,.1); border-radius: 8px; cursor: pointer; font-size: .78rem; transition: all .15s; }
+    .logout-btn:hover { background: rgba(255,255,255,.06); color: rgba(255,255,255,.65); }
+    .hamburger { position: fixed; top: 14px; left: 14px; z-index: 600; background: #0f172a; color: white; border: none; border-radius: 8px; width: 38px; height: 38px; font-size: 1.1rem; cursor: pointer; display: none; align-items: center; justify-content: center; box-shadow: 0 2px 10px rgba(0,0,0,.3); }
+    .sidebar-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,.45); z-index: 499; }
+    .main-wrapper { margin-left: 220px; min-height: 100vh; padding: 24px 16px 40px; display: flex; flex-direction: column; align-items: center; }
+    .view-panel { width: 100%; max-width: 960px; }
+    .list-container { background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,.08); }
+    header { background: linear-gradient(135deg,#1a73e8,#1c5fc4); color: white; padding: 24px 28px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+    header h1   { font-size: 1.15rem; font-weight: 700; letter-spacing: .3px; }
+    header .fecha { font-size: .82rem; opacity: .8; }
+    .edificio-tabs { background: white; display: flex; gap: 8px; padding: 14px 20px; border-bottom: 1px solid #f0f0f0; overflow-x: auto; justify-content: center; }
+    .ed-btn { padding: 7px 20px; border: 2px solid #e0e0e0; border-radius: 24px; background: white; cursor: pointer; font-weight: 600; font-size: .84rem; color: #777; transition: all .15s; white-space: nowrap; }
+    .ed-btn:hover { border-color: #90b8f8; color: #1a73e8; }
+    .ed-btn.active { border-color: #1a73e8; background: #e8f0fe; color: #1a73e8; }
+    .salon-tabs { background: #fafafa; display: flex; gap: 6px; padding: 10px 20px; border-bottom: 1px solid #f0f0f0; overflow-x: auto; justify-content: center; }
+    .salon-btn { padding: 5px 16px; border: 1.5px solid #e0e0e0; border-radius: 20px; background: white; cursor: pointer; font-size: .82rem; font-weight: 500; color: #777; transition: all .15s; white-space: nowrap; }
+    .salon-btn:hover { border-color: #90b8f8; color: #1a73e8; }
+    .salon-btn.active { border-color: #1a73e8; background: #1a73e8; color: white; font-weight: 600; }
+    .stats-bar { background: white; padding: 0; display: flex; border-bottom: 1px solid #f0f0f0; justify-content: center; }
+    .stat { text-align: center; padding: 16px 48px; border-right: 1px solid #f0f0f0; }
+    .stat:last-child { border-right: none; }
+    .stat .num   { font-size: 1.7rem; font-weight: 800; color: #1a73e8; display: block; line-height: 1; }
+    .stat .label { font-size: .62rem; color: #aaa; text-transform: uppercase; letter-spacing: 1.2px; margin-top: 5px; display: block; }
+    .search-bar { background: white; padding: 12px 20px; border-bottom: 1px solid #f0f0f0; }
+    .search-bar input { width: 100%; padding: 9px 18px; border: 1.5px solid #e8e8e8; border-radius: 24px; font-size: .88rem; outline: none; color: #333; background: #fafafa; transition: all .2s; }
+    .search-bar input:focus { border-color: #1a73e8; background: white; box-shadow: 0 0 0 3px rgba(26,115,232,.08); }
+    .participant-row { display: flex; align-items: center; padding: 11px 20px; border-bottom: 1px solid #f5f5f5; gap: 12px; transition: background .15s; }
+    .participant-row:last-child { border-bottom: none; }
+    .participant-row:hover   { background: #f8f9ff; }
+    .participant-row.presente { background: #f0faf1; }
+    .participant-row.presente:hover { background: #e3f5e4; }
+    .num-badge { width: 26px; height: 26px; background: #eef1fb; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .68rem; font-weight: 700; color: #5c6bc0; flex-shrink: 0; }
+    .participant-info { flex: 1; min-width: 0; overflow: hidden; }
+    .nombre-line { display: block; }
+    .nombre-text { font-size: .88rem; font-weight: 600; color: #1a1a2e; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; display: block; }
+    .nombre-dash { display: none; }
+    .username { font-size: .73rem; color: #aaa; margin-top: 2px; }
+    .usr-dash { display: none; }
+    .usr-sep { color: #ccc; margin: 0 3px; }
+    .dni-text { color: #aaa; }
+    .hora-tag { font-size: .75rem; color: #2e7d32; font-weight: 700; min-width: 80px; text-align: right; white-space: nowrap; }
+    .checkbox-wrap { position: relative; width: 24px; height: 24px; flex-shrink: 0; }
+    .checkbox-wrap input[type="checkbox"] { opacity: 0; position: absolute; width: 100%; height: 100%; cursor: pointer; margin: 0; z-index: 1; }
+    .checkbox-wrap .checkmark { position: absolute; top: 0; left: 0; width: 24px; height: 24px; border: 2px solid #d0d0d0; border-radius: 7px; background: white; transition: all .18s; display: flex; align-items: center; justify-content: center; }
+    .checkbox-wrap input:checked ~ .checkmark { background: #1a73e8; border-color: #1a73e8; box-shadow: 0 2px 6px rgba(26,115,232,.35); }
+    .checkbox-wrap .checkmark::after { content: ""; display: none; width: 5px; height: 9px; border: 2px solid white; border-top: none; border-left: none; transform: rotate(45deg) translateY(-1px); }
+    .checkbox-wrap input:checked ~ .checkmark::after { display: block; }
+    .dashboard-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .dashboard-header h2 { font-size: 1.3rem; font-weight: 700; color: #1a1a2e; }
+    .refresh-btn { display: flex; align-items: center; gap: 6px; padding: 9px 18px; background: #1a73e8; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: .84rem; font-weight: 600; transition: background .15s; }
+    .refresh-btn:hover { background: #1557b0; }
+    .overall-card { background: white; border-radius: 16px; padding: 28px 24px; margin-bottom: 16px; box-shadow: 0 2px 12px rgba(0,0,0,.06); text-align: center; }
+    .overall-number { font-size: 3rem; font-weight: 800; color: #1a73e8; line-height: 1; }
+    .overall-label  { font-size: .78rem; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-top: 6px; }
+    .progress-bar-wrap { background: #f0f2f5; border-radius: 99px; height: 10px; margin: 16px 0 8px; overflow: hidden; }
+    .progress-bar-fill  { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#1a73e8,#34a853); transition: width .7s ease; }
+    .dash-section { margin-bottom: 20px; }
+    .dash-section-title { font-size: .75rem; font-weight: 700; color: #999; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; }
+    .building-cards { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; }
+    .building-card { background: white; border-radius: 14px; padding: 20px 16px; box-shadow: 0 2px 12px rgba(0,0,0,.06); text-align: center; }
+    .b-name { font-size: .72rem; font-weight: 700; color: #aaa; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .b-num  { font-size: 2.2rem; font-weight: 800; color: #1a73e8; line-height: 1; }
+    .b-sub  { font-size: .75rem; color: #bbb; margin-top: 4px; }
+    .salon-table { background: white; border-radius: 14px; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,.06); }
+    .salon-row { display: flex; align-items: center; padding: 12px 20px; border-bottom: 1px solid #f5f5f5; gap: 14px; }
+    .salon-row:last-child { border-bottom: none; }
+    .s-name { font-weight: 700; color: #1a1a2e; min-width: 50px; font-size: .88rem; }
+    .s-bar-wrap { flex: 1; background: #f0f2f5; border-radius: 99px; height: 8px; overflow: hidden; }
+    .s-bar { height: 100%; border-radius: 99px; background: linear-gradient(90deg,#1a73e8,#34a853); transition: width .5s; }
+    .s-count { font-size: .82rem; color: #555; min-width: 64px; text-align: right; font-weight: 600; }
+    .dash-loading { text-align: center; padding: 48px; color: #bbb; font-size: .9rem; }
+
+
+
+
+    /* ── FECHA SESION ── */
+    .fecha-sesion-bar { background: white; display: flex; align-items: center; gap: 12px; padding: 12px 20px; border-bottom: 1px solid #f0f0f0; flex-wrap: wrap; }
+
+    .sin-sesion-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 24px; color: #bbb; text-align: center; }
+    .sin-sesion-placeholder .placeholder-icon { font-size: 3rem; margin-bottom: 16px; opacity: .4; }
+    .sin-sesion-placeholder p { font-size: .92rem; color: #ccc; max-width: 280px; line-height: 1.6; }
+    .fecha-sesion-label { font-size: .78rem; font-weight: 700; color: #888; text-transform: uppercase; letter-spacing: .8px; white-space: nowrap; }
+    #fechaSesionSelect { padding: 7px 14px; border: 1.5px solid #e8e8e8; border-radius: 20px; font-size: .88rem; color: #1a1a2e; font-weight: 600; outline: none; cursor: pointer; background: #fafafa; transition: border-color .2s; }
+    #fechaSesionSelect:focus { border-color: #1a73e8; background: white; }
+    /* ── IMPORT VIEW ── */
+    .import-header { margin-bottom: 20px; }
+    .import-header h2 { font-size: 1.3rem; font-weight: 700; color: #1a1a2e; }
+    .import-card { background: white; border-radius: 16px; padding: 28px; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 16px; }
+    .dropzone { border: 2px dashed #d0d8e8; border-radius: 14px; padding: 48px 24px; text-align: center; cursor: pointer; transition: all .2s; background: #fafbfd; }
+    .dropzone:hover, .dropzone.dragover { border-color: #1a73e8; background: #e8f0fe; }
+    .drop-icon { font-size: 2.5rem; margin-bottom: 12px; }
+    .dropzone p { color: #888; font-size: .9rem; margin-bottom: 8px; }
+    .dropzone small { color: #bbb; font-size: .78rem; }
+    .import-preview { background: white; border-radius: 16px; padding: 24px; box-shadow: 0 2px 12px rgba(0,0,0,.06); margin-bottom: 16px; }
+    .preview-title { font-size: .95rem; font-weight: 700; color: #1a1a2e; margin-bottom: 4px; }
+    .preview-sub { font-size: .78rem; color: #aaa; margin-bottom: 16px; }
+    .col-map { display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 20px; }
+    .col-map-item label { font-size: .72rem; font-weight: 700; color: #555; text-transform: uppercase; letter-spacing: .8px; display: block; margin-bottom: 4px; }
+    .col-map-item select { width: 100%; padding: 8px 10px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: .82rem; color: #333; outline: none; }
+    .col-map-item select:focus { border-color: #1a73e8; }
+    .salon-select-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; flex-wrap: wrap; }
+    .salon-select-row label { font-size: .82rem; font-weight: 700; color: #555; white-space: nowrap; }
+    .salon-select-row select { padding: 8px 12px; border: 1.5px solid #e8e8e8; border-radius: 8px; font-size: .85rem; color: #333; outline: none; }
+    .preview-table-wrap { max-height: 220px; overflow-y: auto; border-radius: 10px; border: 1px solid #f0f0f0; margin-bottom: 20px; }
+    .preview-table { width: 100%; border-collapse: collapse; font-size: .8rem; }
+    .preview-table th { background: #f5f7fa; padding: 8px 12px; text-align: left; color: #777; font-weight: 700; font-size: .72rem; text-transform: uppercase; letter-spacing: .8px; position: sticky; top: 0; }
+    .preview-table td { padding: 7px 12px; border-bottom: 1px solid #f5f5f5; color: #333; }
+    .preview-table tr:last-child td { border-bottom: none; }
+    .import-actions { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; }
+    .btn-importar { padding: 11px 24px; background: #1a73e8; color: white; border: none; border-radius: 10px; font-size: .9rem; font-weight: 600; cursor: pointer; transition: background .15s; }
+    .btn-importar:hover { background: #1557b0; }
+    .btn-importar:disabled { background: #aaa; cursor: not-allowed; }
+    .btn-cancelar { padding: 11px 18px; background: white; color: #666; border: 1.5px solid #e0e0e0; border-radius: 10px; font-size: .9rem; cursor: pointer; }
+    .import-badge { font-size: .8rem; color: #2e7d32; font-weight: 600; }
+    /* ── ACTIVITY CHART ── */
+    .act-btn { display: flex; align-items: center; gap: 6px; padding: 9px 18px; background: #2d5a27; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: .84rem; font-weight: 600; transition: background .15s; }
+    .act-btn:hover { background: #1b3a18; }
+    #actModal .chart-panel { width: 560px; }
+    .bar-chart-wrap { width: 100%; overflow-x: auto; margin-top: 8px; }
+    .bar-chart { display: flex; align-items: flex-end; gap: 4px; height: 180px; padding: 0 4px; }
+    .bar-col { display: flex; flex-direction: column; align-items: center; flex: 1; min-width: 32px; }
+    .bar-fill { width: 100%; border-radius: 6px 6px 0 0; background: linear-gradient(180deg,#2d5a27,#6a9a5b); transition: height .5s ease; min-height: 18px; position: relative; overflow: hidden; }
+    .bar-fill:hover { opacity: .85; }
+
+    .bar-label { font-size: .62rem; color: #999; margin-top: 5px; text-align: center; white-space: nowrap; }
+    .act-summary { display: flex; gap: 12px; margin-top: 16px; flex-wrap: wrap; }
+    .act-stat { background: #f0f5ee; border-radius: 10px; padding: 10px 16px; flex: 1; min-width: 120px; text-align: center; }
+    .act-stat .act-num { font-size: 1.4rem; font-weight: 800; color: #2d5a27; }
+    .act-stat .act-lbl { font-size: .7rem; color: #aaa; margin-top: 2px; }
+    .act-granularity { display: flex; gap: 6px; margin-bottom: 12px; }
+    .gran-btn { padding: 5px 12px; border: 1.5px solid #e0e0e0; border-radius: 16px; background: white; font-size: .78rem; cursor: pointer; color: #777; transition: all .15s; }
+    .gran-btn.active { border-color: #2d5a27; background: #2d5a27; color: white; }
+    /* ── CHART MODAL ── */
+    .chart-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.5); z-index: 800; }
+    .chart-panel { position: fixed; top: 50%; left: 50%; transform: translate(-50%,-50%); background: white; border-radius: 20px; padding: 28px; z-index: 801; width: 480px; max-width: 95vw; box-shadow: 0 20px 60px rgba(0,0,0,.25); }
+    .chart-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+    .chart-panel-header h3 { font-size: 1.1rem; font-weight: 700; color: #1a1a2e; }
+    .chart-close { background: #f5f5f5; border: none; border-radius: 50%; width: 32px; height: 32px; cursor: pointer; font-size: 1rem; color: #666; display: flex; align-items: center; justify-content: center; }
+    .chart-close:hover { background: #eee; }
+    #pieCanvas { display: block; margin: 0 auto; }
+    .pie-legend { display: flex; flex-wrap: wrap; gap: 8px 16px; margin-top: 20px; justify-content: center; }
+    .pie-legend-item { display: flex; align-items: center; gap: 6px; font-size: .8rem; color: #444; }
+    .pie-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .chart-btn { display: flex; align-items: center; gap: 6px; padding: 9px 18px; background: #34a853; color: white; border: none; border-radius: 20px; cursor: pointer; font-size: .84rem; font-weight: 600; transition: background .15s; }
+    .chart-btn:hover { background: #2e7d32; }
+    #toast { position: fixed; bottom: 28px; left: 50%; transform: translateX(-50%) translateY(80px); background: #1a1a2e; color: white; padding: 10px 22px; border-radius: 24px; font-size: .86rem; transition: transform .3s; z-index: 999; white-space: nowrap; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
+    #toast.show    { transform: translateX(-50%) translateY(0); }
+    #toast.success { background: #2e7d32; }
+    #toast.error   { background: #c62828; }
+    @media (max-width: 768px) {
+      .sidebar { transform: translateX(-220px); }
+      .sidebar.open { transform: translateX(0); }
+      .sidebar-overlay.open { display: block; }
+      .hamburger { display: flex; }
+      .main-wrapper { margin-left: 0; padding-top: 64px; }
+      .building-cards { grid-template-columns: 1fr 1fr; }
+      .stat { padding: 14px 20px; }
+    }
+    @media (max-width: 480px) {
+      .building-cards { grid-template-columns: 1fr; }
+      .participant-row { padding: 10px 14px; }
+      header { padding: 18px 16px; }
+    }
+  </style>
+</head>
+<body>
+      <div class="pin-dot" id="d2"></div><div class="pin-dot" id="d3"></div>
+    </div>
+    <div class="pin-grid">
+      <button class="pin-btn" onclick="pinPress('1')">1</button>
+      <button class="pin-btn" onclick="pinPress('2')">2</button>
+      <button class="pin-btn" onclick="pinPress('3')">3</button>
+      <button class="pin-btn" onclick="pinPress('4')">4</button>
+      <button class="pin-btn" onclick="pinPress('5')">5</button>
+      <button class="pin-btn" onclick="pinPress('6')">6</button>
+      <button class="pin-btn" onclick="pinPress('7')">7</button>
+      <button class="pin-btn" onclick="pinPress('8')">8</button>
+      <button class="pin-btn" onclick="pinPress('9')">9</button>
+      <button class="pin-btn zero" onclick="pinPress('0')">0</button>
+      <button class="pin-btn del" onclick="pinDel()">&#9003;</button>
+    </div>
+    <div class="pin-error" id="pinError"></div>
+  </div>
+</div>
+<div id="operadorScreen">
+  <div class="op-card">
+    <div class="op-icon">&#128100;</div>
+    <h2>Iniciar sesi&oacute;n</h2>
+    <p>Ingresa tu usuario y contrase&ntilde;a</p>
+    <input type="text" id="opNombre" class="op-input" placeholder="Usuario" autocomplete="username" />
+    <input type="password" id="opPass" class="op-input" placeholder="Contrase&ntilde;a" autocomplete="current-password" />
+    <button class="op-btn" onclick="validarOperador()">Ingresar</button>
+    <div class="op-error" id="opError"></div>
+  </div>
+</div>
+<div class="sidebar" id="sidebar">
+  <div class="sidebar-logo">
+    <h3>&#128203; Asistencia UP</h3>
+    <p>Sistema de registro</p>
+  </div>
+  <nav class="sidebar-nav">
+    <button class="nav-btn active" id="navLista" onclick="showView('lista')">
+      <span class="nav-icon">&#128221;</span> Lista
+    </button>
+    <button class="nav-btn" id="navDashboard" onclick="showView('dashboard')">
+      <span class="nav-icon">&#128202;</span> Dashboard
+    </button>
+    <button class="nav-btn" id="navImportar" onclick="showView('importar')" style="display:none">
+      <span class="nav-icon">&#128228;</span> Importar
+    </button>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="operador-badge">
+      <div class="op-badge-label" id="opBadgeLabel">Operador activo</div>
+      <div class="op-badge-name" id="opNombreDisplay">&#8212;</div>
+    </div>
+    <button class="logout-btn" onclick="cerrarSesion()">&#8617; Cerrar sesi&oacute;n</button>
+  </div>
+</div>
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="toggleSidebar()"></div>
+<button class="hamburger" id="hamburger" onclick="toggleSidebar()">&#9776;</button>
+<div class="main-wrapper" id="appContent" style="display:none">
+  <div id="viewLista" class="view-panel">
+    <div class="list-container">
+      <header>
+        <h1>Registro de Incidencias</h1>
+        <span class="fecha" id="fechaHoy"></span>
+      </header>
+      <div class="fecha-sesion-bar">
+        <span class="fecha-sesion-label">&#128197; Sesi&oacute;n:</span>
+        <select id="fechaSesionSelect" onchange="seleccionarFechaSesion(this.value)">
+          <option value="">Cargando sesiones...</option>
+        </select>
+      </div>
+      <div id="seccionListado" style="display:none">
+        <div class="edificio-tabs" id="edificioTabs"></div>
+        <div class="salon-tabs" id="salonTabs"></div>
+        <div class="stats-bar">
+          <div class="stat"><span class="num" id="totalPresentes">0</span><span class="label">Participantes asistidos</span></div>
+          <div class="stat"><span class="num" id="totalAusentes">0</span><span class="label">Participantes no asistidos</span></div>
+          <div class="stat"><span class="num" id="totalParticipantes">0</span><span class="label">Aforo total</span></div>
+        </div>
+        <div class="search-bar">
+          <input type="text" id="searchInput" placeholder="Buscar usuario..." oninput="filtrar(this.value)" />
+        </div>
+        <div id="listaParticipantes"></div>
+      </div>
+      <div id="placeholderSesion" class="sin-sesion-placeholder">
+        <div class="placeholder-icon">&#128197;</div>
+        <p>Selecciona una sesi&oacute;n para ver los listados disponibles</p>
+      </div>
+    </div>
+  </div>
+  <div id="viewDashboard" class="view-panel" style="display:none">
+    <div class="dashboard-header">
+      <h2>&#128202; Dashboard</h2>
+      <button class="refresh-btn" onclick="cargarDashboard()">&#8635; Actualizar</button>
+      <button class="chart-btn" id="chartBtn" onclick="mostrarGrafico()" style="display:none">&#128200; Ver Gr&aacute;fico</button>
+      <button class="act-btn" id="actBtn" onclick="mostrarActividad()" style="display:none">&#9201; Actividad</button>
+    </div>
+    <div id="dashContent">
+      <div class="dash-loading">Presiona Actualizar para cargar los datos</div>
+    </div>
+
+  </div>
+
+  <!-- Import View -->
+  <div id="viewImportar" class="view-panel" style="display:none">
+    <div class="import-header">
+      <h2>&#128228; Importar Participantes</h2>
+    </div>
+    <div class="import-card">
+      <div class="dropzone" id="dropzone"
+           onclick="document.getElementById('fileInput').click()"
+           ondragover="event.preventDefault();this.classList.add('dragover')"
+           ondragleave="this.classList.remove('dragover')"
+           ondrop="event.preventDefault();this.classList.remove('dragover');manejarArchivo(event.dataTransfer.files[0])">
+        <div class="drop-icon">&#128196;</div>
+        <p>Arrastra tu archivo .xlsx aqu&iacute; o haz clic para seleccionar</p>
+        <small>Formatos aceptados: .xlsx, .xls</small>
+        <input type="file" id="fileInput" accept=".xlsx,.xls" style="display:none"
+               onchange="manejarArchivo(this.files[0])" />
+      </div>
+    </div>
+    <div id="importPreview" style="display:none">
+      <div class="import-preview">
+        <div class="preview-title">Vista previa <span id="previewCount" class="import-badge"></span></div>
+        <div class="preview-sub">Mapea las columnas de tu archivo con los campos del sistema</div>
+        <div class="col-map">
+          <div class="col-map-item"><label>Nombres</label><select id="colNombre"></select></div>
+          <div class="col-map-item"><label>Apellidos</label><select id="colApellidos"></select></div>
+          <div class="col-map-item"><label>Usuario</label><select id="colUsername"></select></div>
+          <div class="col-map-item"><label>DNI</label><select id="colDni"></select></div>
+        </div>
+        <div class="salon-select-row">
+          <label>Destino en Sheets:</label>
+          <input type="text" id="salonDestino" placeholder="Se detecta del nombre del archivo"
+                 style="padding:5px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:.84rem;min-width:140px;color:#333;" />
+          <label style="margin-left:8px;">Fecha de sesión:</label>
+          <input type="date" id="importFechaSesion"
+                 style="margin-left:4px;padding:5px 10px;border:1.5px solid #e0e0e0;border-radius:8px;font-size:.84rem;color:#333;" />
+          <label style="margin-left:8px;color:#27ae60;font-size:.82rem;">&#10003; Crea pestaña nueva en Sheets</label>
+        </div>
+        <div class="preview-table-wrap">
+          <table class="preview-table">
+            <thead><tr><th>#</th><th>Nombre</th><th>Username</th><th>DNI</th></tr></thead>
+            <tbody id="previewBody"></tbody>
+          </table>
+        </div>
+        <div class="import-actions">
+          <button class="btn-importar" id="btnImportar" onclick="importarASalon()">&#128228; Importar a Sheets</button>
+          <button class="btn-cancelar" onclick="cancelarImport()">Cancelar</button>
+          <span id="importStatus"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+
+<div id="actModal" style="display:none">
+  <div class="chart-overlay" onclick="cerrarActividad()"></div>
+  <div class="chart-panel">
+    <div class="chart-panel-header">
+      <h3>&#9201; Actividad por Hora</h3>
+      <button class="chart-close" onclick="cerrarActividad()">&#10005;</button>
+    </div>
+    <div class="act-granularity">
+      <button class="gran-btn active" id="gran15" onclick="cambiarGranularidad(15)">15 min</button>
+      <button class="gran-btn" id="gran30" onclick="cambiarGranularidad(30)">30 min</button>
+      <button class="gran-btn" id="gran60" onclick="cambiarGranularidad(60)">1 hora</button>
+    </div>
+    <div class="bar-chart-wrap">
+      <div class="bar-chart" id="barChart"></div>
+    </div>
+    <div class="act-summary" id="actSummary"></div>
+  </div>
+</div>
+<div id="chartModal" style="display:none">
+  <div class="chart-overlay" onclick="cerrarGrafico()"></div>
+  <div class="chart-panel">
+    <div class="chart-panel-header">
+      <h3>&#128202; Incidencias por Ambiente</h3>
+      <button class="chart-close" onclick="cerrarGrafico()">&#10005;</button>
+    </div>
+    <canvas id="pieCanvas" width="420" height="300"></canvas>
+    <div class="pie-legend" id="pieLegend"></div>
+  </div>
+</div>
+<div id="toast"></div>
+<script>
+  var APPS_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbw3MTQ8YcSdGD5HuWxUe9PMaJ0I0o-HixQqwiJVoI0Hpaou1kvhsu-NWzIggPoKFkb_/exec';
+  var SESSION_TOKEN   = sessionStorage.getItem('asistenciaToken') || '';
+  var OPERADOR_NOMBRE = sessionStorage.getItem('operadorNombre')  || '';
+  var ROL_USUARIO     = sessionStorage.getItem('rolUsuario')      || '';
+  var SALONES_LIST = [];   // se carga dinámicamente por fecha
+
+  var EDIFICIOS = {};   // se construye dinámicamente al seleccionar fecha
+
+  var participantesCache = {};
+  var estado = {};
+  var salonActual      = '';
+  var edificioActual   = salonActual[0];
+  var fechaSesionActual = '';
+  var sesionesData      = [];
+
+  document.getElementById('fechaHoy').textContent = new Date().toLocaleDateString('es-PE', {
+    weekday: 'long', year: 'numeric', month: 'long', day: 'numeric'
+  });
+
+  document.getElementById('opPass').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') validarOperador();
+  });
+  document.getElementById('opNombre').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('opPass').focus();
+  });
+
+  if (SESSION_TOKEN && OPERADOR_NOMBRE) {
+    document.getElementById('operadorScreen').style.display = 'none';
+    document.getElementById('appContent').style.display = '';
+    document.getElementById('opNombreDisplay').textContent = OPERADOR_NOMBRE;
+    aplicarRol(ROL_USUARIO);
+    renderEdificios();
+    cargarSesiones(function() { renderEdificios(); cargarParticipantes(salonActual, function() { renderLista(); cargarDesdeSheets(); }); });
+  }
+
+  function validarOperador() {
+    var usuario  = document.getElementById('opNombre').value.trim();
+    var password = document.getElementById('opPass').value;
+    if (!usuario)  { document.getElementById('opError').textContent = 'Ingresa tu usuario'; return; }
+    if (!password) { document.getElementById('opError').textContent = 'Ingresa tu contrasena'; return; }
+    document.getElementById('opError').textContent = 'Conectando...';
+    document.getElementById('opNombre').disabled = true;
+    document.getElementById('opPass').disabled = true;
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ accion: 'validarUsuario', usuario: usuario, password: password })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.ok) {
+        SESSION_TOKEN   = data.token;
+        OPERADOR_NOMBRE = data.nombre;
+        ROL_USUARIO     = data.rol;
+        sessionStorage.setItem('asistenciaToken', SESSION_TOKEN);
+        sessionStorage.setItem('operadorNombre',  OPERADOR_NOMBRE);
+        sessionStorage.setItem('rolUsuario',       ROL_USUARIO);
+        document.getElementById('operadorScreen').style.display = 'none';
+        document.getElementById('appContent').style.display = '';
+        document.getElementById('opNombreDisplay').textContent = OPERADOR_NOMBRE;
+        aplicarRol(ROL_USUARIO);
+        renderEdificios();
+        cargarSesiones(function() { renderEdificios(); cargarParticipantes(salonActual, function() { renderLista(); cargarDesdeSheets(); }); });
+      } else {
+        document.getElementById('opError').textContent = data.error || 'Usuario o contrasena incorrectos';
+        document.getElementById('opNombre').disabled = false;
+        document.getElementById('opPass').disabled = false;
+      }
+    })
+    .catch(function() {
+      document.getElementById('opError').textContent = 'Sin conexion. Intenta de nuevo.';
+      document.getElementById('opNombre').disabled = false;
+      document.getElementById('opPass').disabled = false;
+    });
+  }
+
+  function aplicarRol(rol) {
+    var esAdmin = rol === 'admin';
+    // Módulo Importar: solo para admins
+    document.getElementById('navImportar').style.display = esAdmin ? '' : 'none';
+    // Badge de rol en sidebar
+    var badgeEl = document.getElementById('opBadgeLabel');
+    if (badgeEl) badgeEl.textContent = esAdmin ? 'Administrador' : 'Operador';
+    // Si un regular está viendo Importar por algún motivo, redirigir a Lista
+    if (!esAdmin && document.getElementById('viewImportar') &&
+        document.getElementById('viewImportar').style.display !== 'none') {
+      showView('lista');
+    }
+  }
+
+  function toggleSidebar() {
+    document.getElementById('sidebar').classList.toggle('open');
+    document.getElementById('sidebarOverlay').classList.toggle('open');
+  }
+
+  function showView(view) {
+    // Bloquear acceso a importar si no es admin
+    if (view === 'importar' && ROL_USUARIO !== 'admin') {
+      mostrarToast('Acceso restringido: solo administradores', 'error');
+      return;
+    }
+    document.getElementById('viewLista').style.display      = view === 'lista'     ? '' : 'none';
+    document.getElementById('viewDashboard').style.display  = view === 'dashboard' ? '' : 'none';
+    document.getElementById('viewImportar').style.display   = view === 'importar'  ? '' : 'none';
+    document.getElementById('navLista').className     = 'nav-btn' + (view === 'lista'     ? ' active' : '');
+    document.getElementById('navDashboard').className = 'nav-btn' + (view === 'dashboard' ? ' active' : '');
+    document.getElementById('navImportar').className  = 'nav-btn' + (view === 'importar'  ? ' active' : '');
+    if (window.innerWidth <= 768) toggleSidebar();
+    if (view === 'dashboard') cargarDashboard();
+  }
+
+  function cerrarSesion() {
+    sessionStorage.clear();
+    location.reload();
+  }
+
+  function cargarDashboard() {
+    document.getElementById('dashContent').innerHTML = '<div class="dash-loading">Cargando datos...</div>';
+    fetch(APPS_SCRIPT_URL + '?action=dashboard&token=' + SESSION_TOKEN + '&fecha=' + fechaSesionActual)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.ok) { document.getElementById('dashContent').innerHTML = '<div class="dash-loading">Error al cargar datos</div>'; return; }
+        renderDashboard(data.data);
+      })
+      .catch(function() {
+        document.getElementById('dashContent').innerHTML = '<div class="dash-loading">Error de conexion. Intenta de nuevo.</div>';
+      });
+  }
+
+  var dashboardData = null;
+
+  function renderDashboard(data) {
+    dashboardData = data;
+    document.getElementById('chartBtn').style.display = '';
+    document.getElementById('actBtn').style.display = '';
+    var totalPresentes = 0, totalTotal = 0;
+    var porEdificio = {};
+    Object.keys(data).forEach(function(salon) {
+      var d = data[salon];
+      totalPresentes += d.presentes;
+      totalTotal     += d.total;
+      var ed = salon[0];
+      if (!porEdificio[ed]) porEdificio[ed] = { presentes: 0, total: 0 };
+      porEdificio[ed].presentes += d.presentes;
+      porEdificio[ed].total     += d.total;
+    });
+    var pct = totalTotal > 0 ? Math.round(totalPresentes / totalTotal * 100) : 0;
+    var html = '';
+    html += '<div class="overall-card">';
+    html += '<div class="overall-number">' + totalPresentes + ' / ' + totalTotal + '</div>';
+    html += '<div class="overall-label">Usuarios asistidos</div>';
+    html += '<div class="progress-bar-wrap"><div class="progress-bar-fill" style="width:' + pct + '%"></div></div>';
+    html += '<div style="font-size:.85rem;color:#888;">' + pct + '% de usuarios asistidos</div>';
+    html += '</div>';
+    html += '<div class="dash-section"><div class="dash-section-title">Por Pabellon</div>';
+    html += '<div class="building-cards">';
+    ['A', 'E', 'F'].forEach(function(ed) {
+      var d = porEdificio[ed] || { presentes: 0, total: 0 };
+      var p = d.total > 0 ? Math.round(d.presentes / d.total * 100) : 0;
+      html += '<div class="building-card">';
+      html += '<div class="b-name">Pabellon ' + ed + '</div>';
+      html += '<div class="b-num">' + d.presentes + '</div>';
+      html += '<div class="b-sub">' + d.total + ' total &middot; ' + p + '%</div>';
+      html += '<div class="progress-bar-wrap" style="margin-top:10px;margin-bottom:0"><div class="progress-bar-fill" style="width:' + p + '%"></div></div>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+    html += '<div class="dash-section"><div class="dash-section-title">Por Salon</div>';
+    html += '<div class="salon-table">';
+    Object.keys(data).sort().forEach(function(salon) {
+      var d = data[salon];
+      var p = d.total > 0 ? Math.round(d.presentes / d.total * 100) : 0;
+      html += '<div class="salon-row">';
+      html += '<span class="s-name">' + salon + '</span>';
+      html += '<div class="s-bar-wrap"><div class="s-bar" style="width:' + p + '%"></div></div>';
+      html += '<span class="s-count">' + d.presentes + ' / ' + d.total + '</span>';
+      html += '</div>';
+    });
+    html += '</div></div>';
+    document.getElementById('dashContent').innerHTML = html;
+  }
+
+  function cargarSesiones(callback) {
+    fetch(APPS_SCRIPT_URL + '?action=sesiones&token=' + SESSION_TOKEN)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        var sel = document.getElementById('fechaSesionSelect');
+        sel.innerHTML = '<option value="">-- Selecciona una sesion --</option>';
+        if (!data.ok || !data.data.length) {
+          sel.innerHTML += '<option value="" disabled>Sin sesiones disponibles</option>';
+          return;
+        }
+        sesionesData = data.data;
+        data.data.forEach(function(s) {
+          var opt = document.createElement('option');
+          opt.value = s.fecha;
+          opt.textContent = s.label + ' (' + s.salones.length + ' salones)';
+          sel.appendChild(opt);
+        });
+        if (callback) callback();
+      })
+      .catch(function() {
+        document.getElementById('fechaSesionSelect').innerHTML = '<option value="">Error al cargar</option>';
+      });
+  }
+
+  function seleccionarFechaSesion(fecha) {
+    fechaSesionActual = fecha;
+    participantesCache = {};
+    estado = {};
+    actividadData = null;
+    dashboardData = null;
+
+    if (!fecha) {
+      document.getElementById('seccionListado').style.display = 'none';
+      document.getElementById('placeholderSesion').style.display = '';
+      return;
+    }
+
+    // Buscar salones para esta fecha en sesionesData
+    var sesion = null;
+    for (var i = 0; i < sesionesData.length; i++) {
+      if (sesionesData[i].fecha === fecha) { sesion = sesionesData[i]; break; }
+    }
+
+    if (!sesion || !sesion.salones || !sesion.salones.length) {
+      document.getElementById('seccionListado').style.display = 'none';
+      document.getElementById('placeholderSesion').style.display = '';
+      return;
+    }
+
+    // Cargar salones dinámicamente
+    SALONES_LIST = sesion.salones.slice().sort();
+    EDIFICIOS = {};
+    SALONES_LIST.forEach(function(s) {
+      var ed = s[0];
+      if (!EDIFICIOS[ed]) EDIFICIOS[ed] = [];
+      EDIFICIOS[ed].push(s);
+    });
+    salonActual    = SALONES_LIST[0];
+    edificioActual = salonActual ? salonActual[0] : '';
+
+    document.getElementById('seccionListado').style.display = '';
+    document.getElementById('placeholderSesion').style.display = 'none';
+    renderEdificios();
+    cargarParticipantes(salonActual, function() { renderLista(); cargarDesdeSheets(); });
+  }
+
+  function cargarParticipantes(salon, callback) {
+    if (participantesCache[salon]) { if (callback) callback(); return; }
+    document.getElementById('listaParticipantes').innerHTML = '<div style="text-align:center;padding:40px;color:#aaa;font-size:.9rem">Cargando participantes...</div>';
+    fetch(APPS_SCRIPT_URL + '?action=participantes&token=' + SESSION_TOKEN + '&salon=' + salon + '&fecha=' + fechaSesionActual)
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.ok) {
+          document.getElementById('listaParticipantes').innerHTML = '<div style="color:#e53935;padding:40px;text-align:center">Error al cargar participantes</div>';
+          return;
+        }
+        participantesCache[salon] = data.data;
+        if (!estado[salon]) {
+          estado[salon] = {};
+          data.data.forEach(function(_, i) { estado[salon][i] = { presente: false, hora: '' }; });
+        }
+        if (callback) callback();
+      })
+      .catch(function() {
+        document.getElementById('listaParticipantes').innerHTML = '<div style="color:#e53935;padding:40px;text-align:center">Error de conexion</div>';
+      });
+  }
+
+  function renderEdificios() {
+    var cont = document.getElementById('edificioTabs');
+    cont.innerHTML = '';
+    Object.keys(EDIFICIOS).sort().forEach(function(ed) {
+      var btn = document.createElement('button');
+      btn.className = 'ed-btn' + (ed === edificioActual ? ' active' : '');
+      btn.textContent = 'Pabellon ' + ed;
+      btn.onclick = function() { seleccionarEdificio(ed); };
+      cont.appendChild(btn);
+    });
+    renderSalones();
+  }
+
+  function renderSalones() {
+    var cont = document.getElementById('salonTabs');
+    cont.innerHTML = '';
+    (EDIFICIOS[edificioActual] || []).forEach(function(s) {
+      var btn = document.createElement('button');
+      btn.className = 'salon-btn' + (s === salonActual ? ' active' : '');
+      btn.textContent = s;
+      btn.onclick = function() { seleccionarSalon(s); };
+      cont.appendChild(btn);
+    });
+  }
+
+  function seleccionarEdificio(ed) {
+    edificioActual = ed;
+    salonActual = EDIFICIOS[ed][0];
+    document.querySelectorAll('.ed-btn').forEach(function(b) { b.classList.toggle('active', b.textContent === 'Pabellon ' + ed); });
+    renderSalones();
+  }
+
+  function seleccionarSalon(s) {
+    salonActual = s;
+    document.querySelectorAll('.salon-btn').forEach(function(b) { b.classList.toggle('active', b.textContent === s); });
+    if (participantesCache[s]) {
+      renderLista();
+      cargarDesdeSheets();
+    } else {
+      cargarParticipantes(s, function() { renderLista(); cargarDesdeSheets(); });
+    }
+  }
+
+  function renderLista(filtro) {
+    var contenedor = document.getElementById('listaParticipantes');
+    contenedor.innerHTML = '';
+    var participantes = participantesCache[salonActual] || [];
+    var filtroLower = filtro ? filtro.toLowerCase() : '';
+    participantes.forEach(function(p, i) {
+      var dni = p.dni || p.codigo || '';
+      if (filtroLower &&
+          p.nombre.toLowerCase().indexOf(filtroLower) === -1 &&
+          (p.username || '').toLowerCase().indexOf(filtroLower) === -1 &&
+          dni.indexOf(filtroLower) === -1) return;
+      var e = estado[salonActual][i];
+      var row = document.createElement('div');
+      row.className = 'participant-row' + (e.presente ? ' presente' : '');
+      row.innerHTML =
+        '<div class="num-badge">' + (i + 1) + '</div>' +
+        '<div class="participant-info">' +
+          '<div class="nombre-line">' +
+            '<span class="nombre-text">' + p.nombre + '</span>' +
+            '<span class="nombre-dash"></span>' +
+          '</div>' +
+          '<div class="username">' +
+            '<span class="usr-text">' + (p.username || '') + '</span>' +
+            '<span class="usr-dash"></span>' +
+            (dni ? '<span class="usr-sep">|</span><span class="dni-text">' + dni + '</span>' : '') +
+          '</div>' +
+        '</div>' +
+        '<span class="hora-tag" id="hora-' + i + '">' + (e.hora || '') + '</span>' +
+        '<label class="checkbox-wrap">' +
+          '<input type="checkbox" ' + (e.presente ? 'checked' : '') + ' onchange="toggleAsistencia(' + i + ', this.checked)" />' +
+          '<span class="checkmark"></span>' +
+        '</label>';
+      contenedor.appendChild(row);
+    });
+    actualizarStats();
+  }
+
+  function actualizarStats() {
+    var participantes = participantesCache[salonActual] || [];
+    var presentes = Object.values(estado[salonActual] || {}).filter(function(e) { return e.presente; }).length;
+    document.getElementById('totalPresentes').textContent     = presentes;
+    document.getElementById('totalAusentes').textContent      = participantes.length - presentes;
+    document.getElementById('totalParticipantes').textContent = participantes.length;
+  }
+
+  function filtrar(val) { renderLista(val); }
+
+  function toggleAsistencia(index, presente) {
+    var ahora  = presente ? new Date().toLocaleTimeString('es-PE', { hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '';
+    var fecha  = new Date().toLocaleDateString('es-PE');
+    var p      = participantesCache[salonActual][index];
+    var row    = document.getElementById('hora-' + index).parentElement;
+    estado[salonActual][index].presente = presente;
+    estado[salonActual][index].hora     = ahora;
+    document.getElementById('hora-' + index).textContent = ahora;
+    row.className = 'participant-row' + (presente ? ' presente' : '');
+    actualizarStats();
+    guardarEnSheets(p.nombre, p.username, presente, ahora, fecha);
+  }
+
+  function guardarEnSheets(nombre, username, presente, hora, fecha) {
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      mode: 'no-cors',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ accion: 'guardarAsistencia', token: SESSION_TOKEN, nombre: nombre, username: username, presente: presente, hora: hora, fecha: fecha, salon: salonActual, operador: OPERADOR_NOMBRE, fecha_sesion: fechaSesionActual })
+    });
+    mostrarToast((presente ? 'Marcado: ' : 'Desmarcado: ') + nombre, presente ? 'success' : '');
+  }
+
+  function cargarDesdeSheets() {
+    fetch(APPS_SCRIPT_URL + '?token=' + SESSION_TOKEN + '&salon=' + salonActual + '&fecha=' + fechaSesionActual, { redirect: 'follow' })
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        if (!data.ok) return;
+        data.data.forEach(function(item) {
+          var participantes = participantesCache[salonActual] || [];
+          var idx = -1;
+          for (var j = 0; j < participantes.length; j++) {
+            if (participantes[j].nombre.toLowerCase().replace(/[\s_]+/g,' ').trim() ===
+                item.nombre.toLowerCase().replace(/[\s_]+/g,' ').trim()) { idx = j; break; }
+          }
+          if (idx >= 0) {
+            estado[salonActual][idx].presente = item.presente;
+            estado[salonActual][idx].hora     = item.hora || '';
+          }
+        });
+        renderLista();
+      })
+      .catch(function() {});
+  }
+
+
+  function mostrarGrafico() {
+    if (!dashboardData) return;
+    document.getElementById('chartModal').style.display = '';
+    setTimeout(function() { dibujarPie(dashboardData); }, 50);
+  }
+
+  function cerrarGrafico() {
+    document.getElementById('chartModal').style.display = 'none';
+  }
+
+  function dibujarPie(data) {
+    var COLORS = ['#1a73e8','#34a853','#fbbc04','#ea4335','#9c27b0','#00bcd4','#ff7043','#607d8b'];
+    var salones = Object.keys(data).sort();
+    var valores = salones.map(function(s) { return data[s].presentes; });
+    var total   = valores.reduce(function(a,b) { return a+b; }, 0);
+
+    var canvas = document.getElementById('pieCanvas');
+    var ctx    = canvas.getContext('2d');
+    var W = canvas.width, H = canvas.height;
+    ctx.clearRect(0, 0, W, H);
+
+    if (total === 0) {
+      ctx.fillStyle = '#aaa';
+      ctx.font = '14px Segoe UI';
+      ctx.textAlign = 'center';
+      ctx.fillText('Sin datos', W/2, H/2);
+      return;
+    }
+
+    var cx = W/2, cy = H/2, r = Math.min(W, H)/2 - 20;
+    var startAngle = -Math.PI / 2;
+
+    salones.forEach(function(salon, i) {
+      var val = valores[i];
+      if (val === 0) return;
+      var slice = (val / total) * 2 * Math.PI;
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, startAngle, startAngle + slice);
+      ctx.closePath();
+      ctx.fillStyle = COLORS[i % COLORS.length];
+      ctx.fill();
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Label percentage
+      var midAngle = startAngle + slice / 2;
+      var lx = cx + (r * 0.65) * Math.cos(midAngle);
+      var ly = cy + (r * 0.65) * Math.sin(midAngle);
+      var pct = Math.round(val / total * 100);
+      if (pct >= 5) {
+        ctx.fillStyle = 'white';
+        ctx.font = 'bold 11px Segoe UI';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(pct + '%', lx, ly);
+      }
+
+      startAngle += slice;
+    });
+
+    // Legend
+    var legend = document.getElementById('pieLegend');
+    legend.innerHTML = '';
+    salones.forEach(function(salon, i) {
+      var d = data[salon];
+      var item = document.createElement('div');
+      item.className = 'pie-legend-item';
+      item.innerHTML = '<div class="pie-dot" style="background:' + COLORS[i % COLORS.length] + '"></div>' +
+        '<span>' + salon + ': ' + d.presentes + ' / ' + d.total + '</span>';
+      legend.appendChild(item);
+    });
+  }
+
+  var excelRawData  = [];
+  var excelHeaders  = [];
+
+  function cargarSheetJS(cb) {
+    if (window.XLSX) { cb(); return; }
+    var s = document.createElement('script');
+    s.src = 'https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js';
+    s.onload = cb;
+    s.onerror = function() { mostrarToast('Necesitas conexion a internet para importar', 'error'); };
+    document.head.appendChild(s);
+  }
+
+  var salonImportNombre = '';
+
+  function manejarArchivo(file) {
+    if (!file) return;
+    if (!file.name.match(/\.xlsx?$/i)) { mostrarToast('Solo se aceptan archivos .xlsx', 'error'); return; }
+    // Extraer nombre del salon del nombre del archivo (sin extensión)
+    salonImportNombre = file.name.replace(/\.[^\.]+$/, '');
+    cargarSheetJS(function() {
+      var reader = new FileReader();
+      reader.onload = function(e) {
+        var wb   = XLSX.read(e.target.result, { type: 'array' });
+        var ws   = wb.Sheets[wb.SheetNames[0]];
+        var data = XLSX.utils.sheet_to_json(ws, { header: 1, defval: '' });
+        if (!data || data.length < 2) { mostrarToast('El archivo parece estar vacio', 'error'); return; }
+        // Limpiar headers
+        excelHeaders  = data[0].map(function(h) { return String(h || '').replace(/\n/g,'').trim(); });
+        // Limpiar celdas: quitar \n, guiones de firma (_ _ _...) y trim
+        function limpiarCelda(v) {
+          return String(v || '').replace(/\n/g,' ').replace(/[_\s]*_[_\s]*/g,' ').replace(/\s{2,}/g,' ').trim();
+        }
+        excelRawData  = data.slice(1)
+          .map(function(r) { return r.map(limpiarCelda); })
+          .filter(function(r) { return r.some(function(c) { return c !== ''; }); });
+        mostrarPreview();
+      };
+      reader.readAsArrayBuffer(file);
+    });
+  }
+
+  function mostrarPreview() {
+    document.getElementById('importPreview').style.display = '';
+    document.getElementById('previewCount').textContent = excelRawData.length + ' filas detectadas';
+
+    var opts = '<option value="-1">— Ninguna —</option>';
+    excelHeaders.forEach(function(h, i) { opts += '<option value="' + i + '">' + h + '</option>'; });
+
+    // (opciones ya cargadas arriba)
+
+    // Auto-detect columnas por prioridad
+    // Orden: primero los más específicos para evitar colisiones
+    var autoMap = {
+      colNombre:    ['nombres', 'nombre', 'name', 'first name', 'primer nombre'],
+      colApellidos: ['apellidos', 'apellido', 'last name', 'postulante', 'participante'],
+      colDni:       ['dni', 'documento', 'cedula', 'codigo', 'código', 'cod'],
+      colUsername:  ['username', 'usuario', 'user', 'correo']
+    };
+    // Resetear a -1 (Ninguna)
+    ['colNombre','colApellidos','colUsername','colDni'].forEach(function(id) {
+      document.getElementById(id).innerHTML = opts;
+      document.getElementById(id).value = '-1';
+    });
+    // Asignar: para cada columna del Excel, buscar el primer campo que coincida
+    excelHeaders.forEach(function(h, i) {
+      var hl = h.toLowerCase().replace(/[áàä]/g,'a').replace(/[éèë]/g,'e').replace(/[íìï]/g,'i').replace(/[óòö]/g,'o').replace(/[úùü]/g,'u').trim();
+      Object.keys(autoMap).forEach(function(id) {
+        if (document.getElementById(id).value !== '-1') return; // ya tiene asignación
+        autoMap[id].some(function(key) {
+          if (hl === key || hl.indexOf(key) !== -1) {
+            document.getElementById(id).value = i;
+            return true;
+          }
+        });
+      });
+    });
+
+    actualizarPreviewTabla();
+    ['colNombre','colApellidos','colUsername','colDni'].forEach(function(id) {
+      document.getElementById(id).onchange = actualizarPreviewTabla;
+    });
+
+    // Salon: auto desde nombre del archivo
+    document.getElementById('salonDestino').value = salonImportNombre;
+
+    // Setear fecha de hoy por defecto en el picker
+    var hoy = new Date();
+    var yyyy = hoy.getFullYear();
+    var mm   = String(hoy.getMonth() + 1).padStart(2, '0');
+    var dd   = String(hoy.getDate()).padStart(2, '0');
+    document.getElementById('importFechaSesion').value = yyyy + '-' + mm + '-' + dd;
+  }
+
+  function combinarNombre(r, ci, ai) {
+    var nom = ci >= 0 ? (r[ci] || '') : '';
+    var ape = ai >= 0 ? (r[ai] || '') : '';
+    if (nom && ape) return ape + ', ' + nom;
+    return nom || ape;
+  }
+
+  function actualizarPreviewTabla() {
+    var ci = parseInt(document.getElementById('colNombre').value);
+    var ai = parseInt(document.getElementById('colApellidos').value);
+    var ui = parseInt(document.getElementById('colUsername').value);
+    var ki = parseInt(document.getElementById('colDni').value);
+    var tbody = document.getElementById('previewBody');
+    tbody.innerHTML = '';
+    var max = Math.min(excelRawData.length, 8);
+    for (var i = 0; i < max; i++) {
+      var r = excelRawData[i];
+      var tr = document.createElement('tr');
+      tr.innerHTML = '<td>' + (i+1) + '</td>' +
+        '<td>' + combinarNombre(r, ci, ai) + '</td>' +
+        '<td>' + (ui >= 0 ? (r[ui] || '') : '') + '</td>' +
+        '<td>' + (ki >= 0 ? (r[ki] || '') : '<span style="color:#ccc">—</span>') + '</td>';
+      tbody.appendChild(tr);
+    }
+    if (excelRawData.length > 8) {
+      var tr2 = document.createElement('tr');
+      tr2.innerHTML = '<td colspan="4" style="text-align:center;color:#aaa;font-style:italic">... y ' + (excelRawData.length - 8) + ' filas mas</td>';
+      tbody.appendChild(tr2);
+    }
+  }
+
+  function cancelarImport() {
+    document.getElementById('importPreview').style.display = 'none';
+    document.getElementById('fileInput').value = '';
+    excelRawData = []; excelHeaders = [];
+  }
+
+  function importarASalon() {
+    var ci     = parseInt(document.getElementById('colNombre').value);
+    var ui     = parseInt(document.getElementById('colUsername').value);
+    var ki     = parseInt(document.getElementById('colDni').value);
+    var salon  = document.getElementById('salonDestino').value.trim();
+
+    if (ci < 0) { mostrarToast('Selecciona la columna Nombre', 'error'); return; }
+    if (!salon) { mostrarToast('El nombre del salón está vacío — revisa el archivo cargado', 'error'); return; }
+
+    var ai     = parseInt(document.getElementById('colApellidos').value);
+    var participantes = excelRawData
+      .map(function(r) {
+        var nom = ci >= 0 ? String(r[ci] || '').trim() : '';
+        var ape = ai >= 0 ? String(r[ai] || '').trim() : '';
+        var nombreCompleto = (nom && ape) ? ape + ', ' + nom : (nom || ape);
+        return {
+          nombre:   nombreCompleto,
+          username: ui >= 0 ? String(r[ui] || '').trim() : '',
+          dni:      ki >= 0 ? String(r[ki] || '').trim() : ''
+        };
+      })
+      .filter(function(p) { return p.nombre.length > 1; });
+
+    if (!participantes.length) { mostrarToast('No hay datos validos para importar', 'error'); return; }
+
+    var btn = document.getElementById('btnImportar');
+    var status = document.getElementById('importStatus');
+    btn.disabled = true;
+    btn.textContent = 'Importando...';
+    status.textContent = '';
+
+    var importFecha = document.getElementById('importFechaSesion') ? document.getElementById('importFechaSesion').value : fechaSesionActual;
+    fetch(APPS_SCRIPT_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'text/plain' },
+      body: JSON.stringify({ accion: 'importarSalon', token: SESSION_TOKEN, salon: salon, fecha: importFecha, participantes: participantes })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.textContent = '\u{1F4E4} Importar a Sheets';
+      if (data.ok) {
+        status.innerHTML = '<span style="color:#2e7d32;font-weight:600">\u2705 ' + participantes.length + ' participantes importados a ' + salon + '</span>';
+        delete participantesCache[salon];
+        delete estado[salon];
+        mostrarToast('Importacion exitosa: ' + salon, 'success');
+      } else {
+        status.innerHTML = '<span style="color:#e53935">' + (data.error || 'Error al importar') + '</span>';
+      }
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.textContent = '\u{1F4E4} Importar a Sheets';
+      status.innerHTML = '<span style="color:#e53935">Error: ' + (err && err.message ? err.message : 'Sin conexion o script no desplegado') + '</span>';
+    });
+  }
+
+  var actividadData = null;
+  var granularidad  = 15;
+
+  function mostrarActividad() {
+    document.getElementById('actModal').style.display = '';
+    if (actividadData) { dibujarBarras(actividadData, granularidad); return; }
+    document.getElementById('barChart').innerHTML = '<div style="color:#aaa;font-size:.85rem;padding:40px;text-align:center">Cargando...</div>';
+    fetch(APPS_SCRIPT_URL + '?action=actividad&token=' + SESSION_TOKEN + '&fecha=' + fechaSesionActual)
+      .then(function(r) { return r.json(); })
+      .then(function(resp) {
+        if (!resp.ok) { document.getElementById('barChart').innerHTML = '<div style="color:#e53935;padding:40px;text-align:center">Error al cargar</div>'; return; }
+        actividadData = resp.data;
+        dibujarBarras(actividadData, granularidad);
+      })
+      .catch(function() {
+        document.getElementById('barChart').innerHTML = '<div style="color:#e53935;padding:40px;text-align:center">Error de conexion</div>';
+      });
+  }
+
+  function cerrarActividad() {
+    document.getElementById('actModal').style.display = 'none';
+  }
+
+  function cambiarGranularidad(mins) {
+    granularidad = mins;
+    document.querySelectorAll('.gran-btn').forEach(function(b) { b.classList.remove('active'); });
+    document.getElementById('gran' + mins).classList.add('active');
+    if (actividadData) dibujarBarras(actividadData, mins);
+  }
+
+  function dibujarBarras(data, mins) {
+    var buckets = {};
+    data.forEach(function(item) {
+      var parts = item.hora.split(':');
+      if (parts.length < 2) return;
+      var h = parseInt(parts[0]);
+      var m = parseInt(parts[1]);
+      if (isNaN(h) || isNaN(m)) return;
+      var bucket = h * 60 + Math.floor(m / mins) * mins;
+      buckets[bucket] = (buckets[bucket] || 0) + 1;
+    });
+
+    var keys = Object.keys(buckets).map(Number).sort(function(a,b){return a-b;});
+    if (keys.length === 0) {
+      document.getElementById('barChart').innerHTML = '<div style="color:#aaa;padding:40px;text-align:center">Sin registros de hora</div>';
+      return;
+    }
+
+    var maxVal = Math.max.apply(null, keys.map(function(k) { return buckets[k]; }));
+    var chartH  = 160;
+
+    var html = '';
+    keys.forEach(function(k) {
+      var val  = buckets[k];
+      var hh   = Math.floor(k / 60);
+      var mm   = k % 60;
+      var hh2  = Math.floor((k + mins) / 60);
+      var mm2  = (k + mins) % 60;
+      var label = (hh < 10 ? '0' : '') + hh + ':' + (mm < 10 ? '0' : '') + mm;
+      var label2 = (hh2 < 10 ? '0' : '') + hh2 + ':' + (mm2 < 10 ? '0' : '') + mm2;
+      var barH   = Math.max(4, Math.round((val / maxVal) * chartH));
+      html += '<div class="bar-col">';
+      html += '<div class="bar-fill" style="height:' + barH + 'px">';
+      html += '<div class="bar-inner-label" style="position:absolute;top:4px;left:0;right:0;text-align:center;font-size:.72rem;font-weight:700;color:white;line-height:1.2;">' + val + '</div>';
+      html += '</div>';
+      html += '<div class="bar-label">' + label + '</div>';
+      html += '</div>';
+    });
+
+    document.getElementById('barChart').innerHTML = html;
+
+    // Summary
+    var total    = data.length;
+    var peakKey  = keys.reduce(function(a,b) { return buckets[a] > buckets[b] ? a : b; });
+    var peakH    = Math.floor(peakKey / 60);
+    var peakM    = peakKey % 60;
+    var peakLabel = (peakH < 10 ? '0' : '') + peakH + ':' + (peakM < 10 ? '0' : '') + peakM;
+
+    document.getElementById('actSummary').innerHTML =
+      '<div class="act-stat"><div class="act-num">' + total + '</div><div class="act-lbl">Total de acciones</div></div>' +
+      '<div class="act-stat"><div class="act-num">' + peakLabel + '</div><div class="act-lbl">Hora pico</div></div>' +
+      '<div class="act-stat"><div class="act-num">' + buckets[peakKey] + '</div><div class="act-lbl">Acciones en hora pico</div></div>';
+  }
+
+  function mostrarToast(msg, tipo) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show' + (tipo ? ' ' + tipo : '');
+    setTimeout(function() { t.className = ''; }, 3000);
+  }
+</script>
+</body>
+</html>
