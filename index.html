@@ -640,7 +640,7 @@
       cargarSesiones(function() { cargarFiltrosReporte(); });
       return;
     }
-    sel.innerHTML = '<option value="">-- Selecciona fecha --</option>';
+    sel.innerHTML = '<option value="">Selecciona fecha</option>';
     var fechasOrdenadas = sesionesData.slice().sort(function(a, b) {
       return a.fecha < b.fecha ? -1 : a.fecha > b.fecha ? 1 : 0;
     });
@@ -909,7 +909,7 @@
     var filtro = (document.getElementById('filtroFechaDesde').value || '').trim();
     var sel    = document.getElementById('fechaSesionSelect');
     var valorAnterior = mantenerSeleccion ? sel.value : '';
-    sel.innerHTML = '<option value="">-- Selecciona una sesion --</option>';
+    sel.innerHTML = '<option value="">Selecciona una sesion</option>';
     var datos = sesionesData.filter(function(s) {
       return !filtro || s.fecha >= filtro;
     }).sort(function(a, b) {
