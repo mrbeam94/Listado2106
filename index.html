@@ -451,7 +451,7 @@
         <div>
           <div style="font-size:.72rem;font-weight:700;color:var(--text-secondary);text-transform:uppercase;letter-spacing:0.8px;margin-bottom:6px">Fecha</div>
           <select id="reporteFecha" onchange="cargarSalonesReporte()" style="padding:9px 14px;border:1.5px solid rgba(0,0,0,0.1);border-radius:12px;font-size:.85rem;color:var(--text-primary);outline:none;font-family:inherit;background:#F2F2F7;min-width:200px;cursor:pointer">
-            <option value="">-- Selecciona fecha --</option>
+            <option value="">Selecciona fecha</option>
           </select>
         </div>
         <div>
@@ -938,7 +938,7 @@
       .then(function(r) { return r.json(); })
       .then(function(data) {
         var sel = document.getElementById('fechaSesionSelect');
-        sel.innerHTML = '<option value="">-- Selecciona una sesion --</option>';
+        sel.innerHTML = '<option value="">Selecciona una sesion</option>';
         if (!data.ok || !data.data.length) {
           sel.innerHTML += '<option value="" disabled>Sin sesiones disponibles</option>';
           return;
